@@ -3,7 +3,7 @@ import ChartBit from "./component/ChartBit";
 
 function App() {
   return (
-    <div className="App">
+    <div data-testid="App" className="App">
       <ChartBit />
     </div>
   );
