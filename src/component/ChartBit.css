@@ -1,0 +1,34 @@
+.chart-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+}
+
+.chart-box {
+  width: 100%;
+  max-width: 1000px;
+}
+
+.trade-table {
+  margin-top: 2rem;
+  width: 100%;
+  max-width: 1000px;
+}
+
+.trade-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.trade-table th,
+.trade-table td {
+  padding: 0.5rem;
+  text-align: center;
+  border: 1px solid #ccc;
+}
+
+.trade-table th {
+  background-color: #f0f0f0;
+}
