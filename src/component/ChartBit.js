@@ -12,6 +12,7 @@ import {
   Legend,
 } from "chart.js";
 import "./ChartBit.css";
+import SearchBar from "./SearchBar";
 
 ChartJS.register(
   LineElement,
@@ -25,13 +26,37 @@ ChartJS.register(
 export default function ChartBit() {
   const [chartData, setChartData] = useState(null);
   const [trades, setTrades] = useState([]);
+  const [markets, setMarkets] = useState([]);
+  const [market, setMarket] = useState("");
+  const minuteOptions = [
+    { key: 0, value: 1 },
+    { key: 1, value: 5 },
+    { key: 2, value: 10 },
+    { key: 3, value: 60 },
+    { key: 4, value: 240 },
+  ];
+  const [minute, setMinute] = useState(minuteOptions[1].value);
 
   useEffect(() => {
-    fetchOHLCV();
+    fetchMarketAll();
   }, []);
 
+  useEffect(() => {
+    console.log("market changed:", market);
+    console.log("minute changed:", minute);
+
+    if (market === "") {
+      return;
+    }
+    fetchOHLCV();
+  }, [market, minute]);
+
   const fetchOHLCV = async () => {
-    const response = await axios.get(requests.fetchKrwBTC);
+    // const response = await axios.get(requests.fetchKrwBTC);
+    console.log("market", market);
+    const response = await axios.get(
+      requests.fetchCandles({ market: market, minutes: minute, count: 200 })
+    );
     const data = response.data.reverse(); // 최신 → 과거 순서로 정렬
 
     const timestamps = data.map((d) => d.candle_date_time_kst.slice(0, 16));
@@ -93,10 +118,24 @@ export default function ChartBit() {
     });
   };
 
+  const fetchMarketAll = async () => {
+    const response = await axios.get(requests.fetchMarketAll);
+
+    setMarkets(response.data);
+    setMarket(response.data[0].market); // 첫 번째 마켓으로 초기화
+  };
+
   return (
     <div className="chart-container">
       <div className="chart-box">
-        <h3>KRW-BTC MACD 차트</h3>
+        <SearchBar
+          markets={markets}
+          market={market}
+          setMarket={setMarket}
+          minuteOptions={minuteOptions}
+          minute={minute}
+          setMinute={setMinute}
+        />
         {chartData ? (
           <Line
             data={chartData}
