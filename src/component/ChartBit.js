@@ -45,78 +45,78 @@ export default function ChartBit() {
     console.log("market changed:", market);
     console.log("minute changed:", minute);
 
+    const fetchOHLCV = async () => {
+      // const response = await axios.get(requests.fetchKrwBTC);
+      console.log("market", market);
+      const response = await axios.get(
+        requests.fetchCandles({ market: market, minutes: minute, count: 200 })
+      );
+      const data = response.data.reverse(); // 최신 → 과거 순서로 정렬
+
+      const timestamps = data.map((d) => d.candle_date_time_kst.slice(0, 16));
+      const close = data.map((d) => d.trade_price);
+
+      const {
+        macd,
+        signal,
+        buySignals,
+        sellSignals,
+        trades: tradeList,
+      } = calculateMACDAndTrades(close, timestamps);
+
+      setTrades(tradeList);
+
+      setChartData({
+        labels: timestamps,
+        datasets: [
+          {
+            label: "Close",
+            data: close,
+            borderColor: "blue",
+            yAxisID: "y",
+          },
+          {
+            label: "MACD",
+            data: macd,
+            borderColor: "green",
+            yAxisID: "y1",
+          },
+          {
+            label: "Signal",
+            data: signal,
+            borderColor: "red",
+            borderDash: [5, 5],
+            yAxisID: "y1",
+          },
+          {
+            label: "Buy",
+            data: buySignals,
+            pointStyle: "triangle",
+            pointRadius: 6,
+            backgroundColor: "green",
+            borderColor: "black",
+            showLine: false,
+            yAxisID: "y",
+          },
+          {
+            label: "Sell",
+            data: sellSignals,
+            pointStyle: "rectRot",
+            pointRadius: 6,
+            backgroundColor: "red",
+            borderColor: "black",
+            showLine: false,
+            yAxisID: "y",
+          },
+        ],
+      });
+    };
+
     if (market === "") {
       return;
     }
     fetchOHLCV();
   }, [market, minute]);
-
-  const fetchOHLCV = async () => {
-    // const response = await axios.get(requests.fetchKrwBTC);
-    console.log("market", market);
-    const response = await axios.get(
-      requests.fetchCandles({ market: market, minutes: minute, count: 200 })
-    );
-    const data = response.data.reverse(); // 최신 → 과거 순서로 정렬
-
-    const timestamps = data.map((d) => d.candle_date_time_kst.slice(0, 16));
-    const close = data.map((d) => d.trade_price);
-
-    const {
-      macd,
-      signal,
-      buySignals,
-      sellSignals,
-      trades: tradeList,
-    } = calculateMACDAndTrades(close, timestamps);
-
-    setTrades(tradeList);
-
-    setChartData({
-      labels: timestamps,
-      datasets: [
-        {
-          label: "Close",
-          data: close,
-          borderColor: "blue",
-          yAxisID: "y",
-        },
-        {
-          label: "MACD",
-          data: macd,
-          borderColor: "green",
-          yAxisID: "y1",
-        },
-        {
-          label: "Signal",
-          data: signal,
-          borderColor: "red",
-          borderDash: [5, 5],
-          yAxisID: "y1",
-        },
-        {
-          label: "Buy",
-          data: buySignals,
-          pointStyle: "triangle",
-          pointRadius: 6,
-          backgroundColor: "green",
-          borderColor: "black",
-          showLine: false,
-          yAxisID: "y",
-        },
-        {
-          label: "Sell",
-          data: sellSignals,
-          pointStyle: "rectRot",
-          pointRadius: 6,
-          backgroundColor: "red",
-          borderColor: "black",
-          showLine: false,
-          yAxisID: "y",
-        },
-      ],
-    });
-  };
 
   const fetchMarketAll = async () => {
     const response = await axios.get(requests.fetchMarketAll);
