@@ -72,28 +72,31 @@ export default function ChartBit() {
           {
             label: "Close",
             data: close,
-            borderColor: "blue",
+            borderColor: "#035AA6", // 파란색
             yAxisID: "y",
+            borderWidth: 1,
           },
           {
             label: "MACD",
             data: macd,
-            borderColor: "green",
+            borderColor: "#C0E218", // 초록색
             yAxisID: "y1",
+            borderWidth: 1,
           },
           {
             label: "Signal",
             data: signal,
-            borderColor: "red",
+            borderColor: "#F05454", // 빨간색
             borderDash: [5, 5],
             yAxisID: "y1",
+            borderWidth: 1,
           },
           {
             label: "Buy",
             data: buySignals,
             pointStyle: "triangle",
             pointRadius: 6,
-            backgroundColor: "green",
+            backgroundColor: "#C0E218",
             borderColor: "black",
             showLine: false,
             yAxisID: "y",
@@ -103,7 +106,7 @@ export default function ChartBit() {
             data: sellSignals,
             pointStyle: "rectRot",
             pointRadius: 6,
-            backgroundColor: "red",
+            backgroundColor: "#F05454",
             borderColor: "black",
             showLine: false,
             yAxisID: "y",
