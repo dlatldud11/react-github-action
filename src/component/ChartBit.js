@@ -10,9 +10,11 @@ import {
   CategoryScale,
   Tooltip,
   Legend,
+  TimeScale,
 } from "chart.js";
 import "./ChartBit.css";
 import SearchBar from "./SearchBar";
+import "chartjs-adapter-date-fns";
 
 ChartJS.register(
   LineElement,
@@ -20,7 +22,8 @@ ChartJS.register(
   LinearScale,
   CategoryScale,
   Tooltip,
-  Legend
+  Legend,
+  TimeScale
 );
 
 export default function ChartBit() {
@@ -72,32 +75,35 @@ export default function ChartBit() {
           {
             label: "Close",
             data: close,
-            borderColor: "#035AA6", // 파란색
+            borderColor: "#1EAFED", // 파란색
             yAxisID: "y",
             borderWidth: 1,
+            pointRadius: 1,
           },
           {
             label: "MACD",
             data: macd,
-            borderColor: "#C0E218", // 초록색
+            borderColor: "#17B978", // 초록색
             yAxisID: "y1",
             borderWidth: 1,
+            pointRadius: 0,
           },
           {
             label: "Signal",
             data: signal,
-            borderColor: "#F05454", // 빨간색
+            borderColor: "#ED2B2A", // 빨간색
             borderDash: [5, 5],
             yAxisID: "y1",
             borderWidth: 1,
+            pointRadius: 0,
           },
           {
             label: "Buy",
             data: buySignals,
             pointStyle: "triangle",
-            pointRadius: 6,
-            backgroundColor: "#C0E218",
-            borderColor: "black",
+            pointRadius: 5,
+            backgroundColor: "#17B978",
+            borderColor: "black", // 원래는 black
             showLine: false,
             yAxisID: "y",
           },
@@ -105,9 +111,9 @@ export default function ChartBit() {
             label: "Sell",
             data: sellSignals,
             pointStyle: "rectRot",
-            pointRadius: 6,
-            backgroundColor: "#F05454",
-            borderColor: "black",
+            pointRadius: 5,
+            backgroundColor: "#ED2B2A",
+            borderColor: "black", // 원래는 black
             showLine: false,
             yAxisID: "y",
           },
@@ -150,6 +156,20 @@ export default function ChartBit() {
                 },
               },
               scales: {
+                x: {
+                  type: "time",
+                  time: {
+                    tooltipFormat: "MMM dd HH:mm", // 툴팁 포맷
+                    displayFormats: {
+                      minute: "HH:mm",
+                      hour: "MMM dd HH:mm",
+                    },
+                  },
+                  ticks: {
+                    autoSkip: true,
+                    maxTicksLimit: 20,
+                  },
+                },
                 y: {
                   type: "linear",
                   position: "left",
