@@ -1,6 +1,5 @@
 import "./App.css";
 import ChartBit from "./component/ChartBit";
-import Counter from "./component/Counter";
 
 function App() {
   return (
