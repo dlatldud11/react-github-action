@@ -26,6 +26,31 @@ ChartJS.register(
   TimeScale
 );
 
+function getMACDParams(timeframe) {
+  // console.log("timeframe", timeframe);
+  switch (timeframe) {
+    case 1:
+      return { shortPeriod: 12, longPeriod: 26, signalPeriod: 9 };
+    case 5:
+    case 10:
+      return { shortPeriod: 9, longPeriod: 21, signalPeriod: 5 };
+    case 60:
+      return { shortPeriod: 12, longPeriod: 26, signalPeriod: 9 };
+    case 240:
+      return { shortPeriod: 6, longPeriod: 13, signalPeriod: 4 };
+    default:
+      return { shortPeriod: 12, longPeriod: 26, signalPeriod: 9 };
+  }
+}
+
+//불필요한 소숫점 제거 함수 (소숫점이 없다면 정수로 반환)
+function formatSmartNumber(value, digits = 8) {
+  const num = Number(value);
+  return num % 1 === 0
+    ? num.toString()
+    : num.toFixed(digits).replace(/\.?0+$/, "");
+}
+
 export default function ChartBit() {
   const [chartData, setChartData] = useState(null);
   const [trades, setTrades] = useState([]);
@@ -45,12 +70,10 @@ export default function ChartBit() {
   }, []);
 
   useEffect(() => {
-    console.log("market changed:", market);
-    console.log("minute changed:", minute);
+    // console.log("market changed:", market);
+    // console.log("minute changed:", minute);
 
     const fetchOHLCV = async () => {
-      // const response = await axios.get(requests.fetchKrwBTC);
-      console.log("market", market);
       const response = await axios.get(
         requests.fetchCandles({ market: market, minutes: minute, count: 200 })
       );
@@ -59,13 +82,21 @@ export default function ChartBit() {
       const timestamps = data.map((d) => d.candle_date_time_kst.slice(0, 16));
       const close = data.map((d) => d.trade_price);
 
+      const { shortPeriod, longPeriod, signalPeriod } = getMACDParams(minute); // '1', '5', '60' 등
+
       const {
         macd,
         signal,
         buySignals,
         sellSignals,
         trades: tradeList,
-      } = calculateMACDAndTrades(close, timestamps);
+      } = calculateMACDAndTrades(
+        close,
+        timestamps,
+        shortPeriod,
+        longPeriod,
+        signalPeriod
+      );
 
       setTrades(tradeList);
 
@@ -154,6 +185,16 @@ export default function ChartBit() {
                 legend: {
                   position: "top",
                 },
+                tooltip: {
+                  callbacks: {
+                    label: function (context) {
+                      let label = context.dataset.label || "";
+                      if (label) label += ": ";
+                      label += formatSmartNumber(context.raw, 8); // 8자리 표시
+                      return label;
+                    },
+                  },
+                },
               },
               scales: {
                 x: {
@@ -173,11 +214,21 @@ export default function ChartBit() {
                 y: {
                   type: "linear",
                   position: "left",
+                  ticks: {
+                    callback: function (value) {
+                      return formatSmartNumber(value, 8); // 최대 8자리까지 표시
+                    },
+                  },
                 },
                 y1: {
                   type: "linear",
                   position: "right",
                   grid: { drawOnChartArea: false },
+                  ticks: {
+                    callback: function (value) {
+                      return formatSmartNumber(value, 8); // 최대 8자리까지 표시
+                    },
+                  },
                 },
               },
             }}
@@ -205,8 +256,8 @@ export default function ChartBit() {
                 <tr key={i}>
                   <td>{t.entryTime}</td>
                   <td>{t.exitTime}</td>
-                  <td>{t.entryPrice.toFixed(0)}</td>
-                  <td>{t.exitPrice.toFixed(0)}</td>
+                  <td>{formatSmartNumber(t.entryPrice, 8)}</td>
+                  <td>{formatSmartNumber(t.exitPrice, 8)}</td>
                   <td>{t.gain}</td>
                 </tr>
               ))}
