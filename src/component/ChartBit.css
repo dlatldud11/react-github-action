@@ -32,3 +32,7 @@
 .trade-table th {
   background-color: #f0f0f0;
 }
+
+.rsi-chart-box {
+  margin-top: 1rem;
+}

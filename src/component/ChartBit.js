@@ -15,6 +15,7 @@ import {
 import "./ChartBit.css";
 import SearchBar from "./SearchBar";
 import "chartjs-adapter-date-fns";
+import annotationPlugin from "chartjs-plugin-annotation";
 
 ChartJS.register(
   LineElement,
@@ -23,7 +24,8 @@ ChartJS.register(
   CategoryScale,
   Tooltip,
   Legend,
-  TimeScale
+  TimeScale,
+  annotationPlugin
 );
 
 function getMACDParams(timeframe) {
@@ -52,7 +54,8 @@ function formatSmartNumber(value, digits = 8) {
 }
 
 export default function ChartBit() {
-  const [chartData, setChartData] = useState(null);
+  const [macdData, setMacdData] = useState(null);
+  const [rsiData, setRsiData] = useState(null);
   const [trades, setTrades] = useState([]);
   const [markets, setMarkets] = useState([]);
   const [market, setMarket] = useState("");
@@ -87,6 +90,7 @@ export default function ChartBit() {
       const {
         macd,
         signal,
+        rsi,
         buySignals,
         sellSignals,
         trades: tradeList,
@@ -100,7 +104,7 @@ export default function ChartBit() {
 
       setTrades(tradeList);
 
-      setChartData({
+      setMacdData({
         labels: timestamps,
         datasets: [
           {
@@ -150,6 +154,20 @@ export default function ChartBit() {
           },
         ],
       });
+
+      setRsiData({
+        labels: timestamps,
+        datasets: [
+          {
+            label: "RSI",
+            data: rsi,
+            borderColor: "purple", // 보라색
+            backgroundColor: "purple",
+            borderWidth: 1,
+            pointRadius: 1,
+          },
+        ],
+      });
     };
 
     if (market === "") {
@@ -165,6 +183,98 @@ export default function ChartBit() {
     setMarket(response.data[0].market); // 첫 번째 마켓으로 초기화
   };
 
+  const macdOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: "top",
+      },
+      tooltip: {
+        callbacks: {
+          label: function (context) {
+            let label = context.dataset.label || "";
+            if (label) label += ": ";
+            label += formatSmartNumber(context.raw, 8); // 8자리 표시
+            return label;
+          },
+        },
+      },
+    },
+    scales: {
+      x: {
+        type: "time",
+        time: {
+          tooltipFormat: "MMM dd HH:mm", // 툴팁 포맷
+          displayFormats: {
+            minute: "HH:mm",
+            hour: "MMM dd HH:mm",
+          },
+        },
+        ticks: {
+          autoSkip: true,
+          maxTicksLimit: 20,
+        },
+      },
+      y: {
+        type: "linear",
+        position: "left",
+        ticks: {
+          callback: function (value) {
+            return formatSmartNumber(value, 8); // 최대 8자리까지 표시
+          },
+        },
+      },
+      y1: {
+        type: "linear",
+        position: "right",
+        grid: { drawOnChartArea: false },
+        ticks: {
+          callback: function (value) {
+            return formatSmartNumber(value, 8); // 최대 8자리까지 표시
+          },
+        },
+      },
+    },
+  };
+
+  const rsiChartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: "top",
+      },
+      annotation: {
+        annotations: {
+          avarage: {
+            type: "box",
+            yMin: 30,
+            yMax: 70,
+            backgroundColor: "rgba(193, 99, 255, 0.2)",
+          },
+        },
+      },
+    },
+    scales: {
+      x: {
+        type: "time",
+        time: {
+          tooltipFormat: "MMM dd HH:mm",
+          displayFormats: {
+            minute: "HH:mm",
+            hour: "MMM dd HH:mm",
+          },
+        },
+      },
+      y: {
+        min: 0,
+        max: 100,
+        ticks: {
+          stepSize: 10,
+        },
+      },
+    },
+  };
+
   return (
     <div className="chart-container">
       <div className="chart-box">
@@ -176,65 +286,16 @@ export default function ChartBit() {
           minute={minute}
           setMinute={setMinute}
         />
-        {chartData ? (
-          <Line
-            data={chartData}
-            options={{
-              responsive: true,
-              plugins: {
-                legend: {
-                  position: "top",
-                },
-                tooltip: {
-                  callbacks: {
-                    label: function (context) {
-                      let label = context.dataset.label || "";
-                      if (label) label += ": ";
-                      label += formatSmartNumber(context.raw, 8); // 8자리 표시
-                      return label;
-                    },
-                  },
-                },
-              },
-              scales: {
-                x: {
-                  type: "time",
-                  time: {
-                    tooltipFormat: "MMM dd HH:mm", // 툴팁 포맷
-                    displayFormats: {
-                      minute: "HH:mm",
-                      hour: "MMM dd HH:mm",
-                    },
-                  },
-                  ticks: {
-                    autoSkip: true,
-                    maxTicksLimit: 20,
-                  },
-                },
-                y: {
-                  type: "linear",
-                  position: "left",
-                  ticks: {
-                    callback: function (value) {
-                      return formatSmartNumber(value, 8); // 최대 8자리까지 표시
-                    },
-                  },
-                },
-                y1: {
-                  type: "linear",
-                  position: "right",
-                  grid: { drawOnChartArea: false },
-                  ticks: {
-                    callback: function (value) {
-                      return formatSmartNumber(value, 8); // 최대 8자리까지 표시
-                    },
-                  },
-                },
-              },
-            }}
-          />
+        {macdData ? (
+          <Line data={macdData} options={macdOptions} />
         ) : (
           <p>Loading...</p>
+        )}
+        {rsiData && (
+          <div className="rsi-chart-box">
+            <h4>RSI지표</h4>
+            <Line data={rsiData} options={rsiChartOptions} />
+          </div>
         )}
       </div>
 
@@ -274,8 +335,16 @@ function calculateMACDAndTrades(
   timestamps,
   shortPeriod = 12,
   longPeriod = 26,
-  signalPeriod = 9
+  signalPeriod = 9,
+  rsiPeriod = 14
 ) {
+  // console.log("Calculating MACD and trades with params:", {
+  //   shortPeriod,
+  //   longPeriod,
+  //   signalPeriod,
+  //   rsiPeriod,
+  // });
+
   const ema = (data, period) => {
     const k = 2 / (period + 1);
     let emaArray = [data[0]];
@@ -283,6 +352,35 @@ function calculateMACDAndTrades(
       emaArray.push(data[i] * k + emaArray[i - 1] * (1 - k));
     }
     return emaArray;
+  };
+
+  const calculateRSI = (data, period) => {
+    const rsi = Array(data.length).fill(null);
+    let gains = 0;
+    let losses = 0;
+
+    for (let i = 1; i <= period; i++) {
+      const diff = data[i] - data[i - 1];
+      if (diff >= 0) gains += diff;
+      else losses -= diff;
+    }
+
+    let avgGain = gains / period;
+    let avgLoss = losses / period;
+    rsi[period] = 100 - 100 / (1 + avgGain / avgLoss);
+
+    for (let i = period + 1; i < data.length; i++) {
+      const diff = data[i] - data[i - 1];
+      const gain = diff > 0 ? diff : 0;
+      const loss = diff < 0 ? -diff : 0;
+
+      avgGain = (avgGain * (period - 1) + gain) / period;
+      avgLoss = (avgLoss * (period - 1) + loss) / period;
+
+      rsi[i] = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
+    }
+
+    return rsi;
   };
 
   const shortEMA = ema(closePrices, shortPeriod);
@@ -293,6 +391,8 @@ function calculateMACDAndTrades(
     .fill(null)
     .concat(signal);
 
+  const rsi = calculateRSI(closePrices, rsiPeriod);
+
   const buySignals = Array(closePrices.length).fill(null);
   const sellSignals = Array(closePrices.length).fill(null);
   const trades = [];
@@ -302,21 +402,25 @@ function calculateMACDAndTrades(
   let entryIndex = null;
 
   for (let i = 1; i < macd.length; i++) {
-    if (fullSignal[i] == null) continue;
+    if (fullSignal[i] == null || rsi[i] == null) continue;
 
     const prevDiff = macd[i - 1] - fullSignal[i - 1];
     const currDiff = macd[i] - fullSignal[i];
 
-    // 매수
-    if (!inPosition && prevDiff < 0 && currDiff > 0) {
+    // console.log(`${inPosition} ${prevDiff} ${currDiff} ${rsi[i]}`);
+
+    // MACD 골든크로스 + RSI 과매도 원래는 30
+    if (!inPosition && prevDiff < 0 && currDiff > 0 && rsi[i] < 40) {
+      // if (!inPosition && prevDiff < 0 && currDiff > 0) {
       buySignals[i] = closePrices[i];
       inPosition = true;
       entryPrice = closePrices[i];
       entryIndex = i;
     }
 
-    // 매도
-    if (inPosition && prevDiff > 0 && currDiff < 0) {
+    // MACD 데드크로스 + RSI 과매수 원래는 70
+    if (inPosition && prevDiff > 0 && currDiff < 0 && rsi[i] > 60) {
+      // if (inPosition && prevDiff > 0 && currDiff < 0) {
       sellSignals[i] = closePrices[i];
       const exitPrice = closePrices[i];
       const gain = ((exitPrice - entryPrice) / entryPrice) * 100;
@@ -331,5 +435,10 @@ function calculateMACDAndTrades(
     }
   }
 
-  return { macd, signal: fullSignal, buySignals, sellSignals, trades };
+  /* const rsiValid = rsi.filter((v) => v != null);
+  const minRSI = Math.min(...rsiValid);
+  const maxRSI = Math.max(...rsiValid);
+  console.log("RSI range:", minRSI.toFixed(2), "-", maxRSI.toFixed(2)); */
+
+  return { macd, signal: fullSignal, rsi, buySignals, sellSignals, trades };
 }
