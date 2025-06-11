@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import requests from "../api/requests";
-import axios from "../api/axios";
+// import axios from "../api/axios";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
