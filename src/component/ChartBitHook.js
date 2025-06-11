@@ -16,6 +16,7 @@ import "./ChartBit.css";
 import SearchBar from "./SearchBar";
 import "chartjs-adapter-date-fns";
 import annotationPlugin from "chartjs-plugin-annotation";
+import UseFetch from "../hooks/UseFetch";
 
 ChartJS.register(
   LineElement,
@@ -76,11 +77,17 @@ function formatSmartNumber(value, digits = 8) {
     : num.toFixed(digits).replace(/\.?0+$/, "");
 }
 
-export default function ChartBit() {
+export default function ChartBitHook() {
   const [macdData, setMacdData] = useState(null);
   const [rsiData, setRsiData] = useState(null);
   const [trades, setTrades] = useState([]);
-  const [markets, setMarkets] = useState([]);
+  const [{ isLoading, data: markets, error }, setUrl] = UseFetch(
+    requests.fetchMarketAll
+  );
+  const [
+    { isLoading: isCandleLoading, data: candles, error: candleError },
+    setCandelUrl,
+  ] = UseFetch();
   const [market, setMarket] = useState("");
   const minuteOptions = [
     { key: 0, value: 1 },
@@ -91,20 +98,43 @@ export default function ChartBit() {
     { key: 5, value: 240 },
   ];
   const [minute, setMinute] = useState(minuteOptions[1].value);
+  const [date, setDate] = useState("");
 
   useEffect(() => {
-    fetchMarketAll();
-  }, []);
+    if (markets && markets.length > 0) {
+      setMarket(markets[0].market); // 마켓 목록 불러왔을 때 첫 번째 마켓으로 초기화
+    }
+  }, [markets]);
 
   useEffect(() => {
     // console.log("market changed:", market);
     // console.log("minute changed:", minute);
+    // console.log("date changed:", date);
 
     const fetchOHLCV = async () => {
-      const response = await axios.get(
-        requests.fetchCandles({ market: market, minutes: minute, count: 200 })
+      setCandelUrl(
+        requests.fetchCandles({
+          market: market,
+          minutes: minute,
+          count: 200,
+          datetime: date,
+        })
       );
-      const data = response.data.reverse(); // 최신 → 과거 순서로 정렬
+    };
+
+    if (market === "") {
+      return;
+    }
+    fetchOHLCV();
+  }, [market, minute, date]);
+
+  useEffect(() => {
+    if (!isCandleLoading && candles) {
+      // console.log("candles", candles.length);
+      // console.log("isCandleLoading", isCandleLoading);
+      // console.log("minute changed:", minute);
+
+      const data = candles.reverse(); // 최신 → 과거 순서로 정렬
 
       const timestamps = data.map((d) => d.candle_date_time_kst.slice(0, 16));
       const close = data.map((d) => d.trade_price);
@@ -194,20 +224,10 @@ export default function ChartBit() {
           },
         ],
       });
-    };
-
-    if (market === "") {
+    } else {
       return;
     }
-    fetchOHLCV();
-  }, [market, minute]);
-
-  const fetchMarketAll = async () => {
-    const response = await axios.get(requests.fetchMarketAll);
-
-    setMarkets(response.data);
-    setMarket(response.data[0].market); // 첫 번째 마켓으로 초기화
-  };
+  }, [candles, isCandleLoading, minute]);
 
   const macdOptions = {
     responsive: true,
@@ -303,28 +323,32 @@ export default function ChartBit() {
 
   return (
     <div className="chart-container">
-      <div className="chart-box">
-        <SearchBar
-          markets={markets}
-          market={market}
-          setMarket={setMarket}
-          minuteOptions={minuteOptions}
-          minute={minute}
-          setMinute={setMinute}
-        />
-        {macdData ? (
-          <Line data={macdData} options={macdOptions} />
-        ) : (
-          <p>Loading...</p>
-        )}
-        {rsiData && (
-          <div className="rsi-chart-box">
-            <h4>RSI지표</h4>
-            <Line data={rsiData} options={rsiChartOptions} />
-          </div>
-        )}
-      </div>
-
+      {isLoading && <p>Loading...</p>}
+      {!isLoading && markets && markets.length > 0 && (
+        <div className="chart-box">
+          <SearchBar
+            markets={markets}
+            market={market}
+            setMarket={setMarket}
+            minuteOptions={minuteOptions}
+            minute={minute}
+            setMinute={setMinute}
+            date={date}
+            setDate={setDate}
+          />
+          {macdData ? (
+            <Line data={macdData} options={macdOptions} />
+          ) : (
+            <p>Loading...</p>
+          )}
+          {rsiData && (
+            <div className="rsi-chart-box">
+              <h4>RSI지표</h4>
+              <Line data={rsiData} options={rsiChartOptions} />
+            </div>
+          )}
+        </div>
+      )}
       {trades.length > 0 && (
         <div className="trade-table">
           <h4>매매 내역</h4>
