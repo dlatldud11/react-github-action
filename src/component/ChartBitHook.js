@@ -108,22 +108,17 @@ export default function ChartBitHook() {
     // console.log("minute changed:", minute);
     // console.log("date changed:", date);
 
-    const fetchOHLCV = async () => {
-      setCandelUrl(
-        requests.fetchCandles({
-          market: market,
-          minutes: minute,
-          count: 200,
-          datetime: date,
-        })
-      );
-    };
-
     if (market === "") {
       return;
     }
-    fetchOHLCV();
-  }, [market, minute, date]);
+    const url = requests.fetchCandles({
+      market,
+      minutes: minute,
+      count: 200,
+      datetime: date,
+    });
+    setCandelUrl(url); // 비동기 아님, 단순 setState
+  }, [market, minute, date, setCandelUrl]);
 
   useEffect(() => {
     if (!isCandleLoading && candles) {
