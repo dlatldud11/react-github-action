@@ -81,13 +81,9 @@ export default function ChartBitHook() {
   const [macdData, setMacdData] = useState(null);
   const [rsiData, setRsiData] = useState(null);
   const [trades, setTrades] = useState([]);
-  const [{ isLoading, data: markets, error }, setUrl] = UseFetch(
-    requests.fetchMarketAll
-  );
-  const [
-    { isLoading: isCandleLoading, data: candles, error: candleError },
-    setCandelUrl,
-  ] = UseFetch();
+  const [{ isLoading, data: markets }] = UseFetch(requests.fetchMarketAll);
+  const [{ isLoading: isCandleLoading, data: candles }, setCandelUrl] =
+    UseFetch();
   const [market, setMarket] = useState("");
   const minuteOptions = [
     { key: 0, value: 1 },
@@ -106,6 +102,7 @@ export default function ChartBitHook() {
     }
   }, [markets]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     // console.log("market changed:", market);
     // console.log("minute changed:", minute);
