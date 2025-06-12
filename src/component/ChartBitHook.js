@@ -30,42 +30,71 @@ ChartJS.register(
 );
 
 function getMACDParams(timeframe) {
-  // console.log("timeframe", timeframe);
+  // console.log("timeframe", timeframe, typeof timeframe);
   switch (timeframe) {
-    case 1:
-      return { shortPeriod: 5, longPeriod: 13, signalPeriod: 4, rsiPeriod: 7 };
-    case 5:
-      return { shortPeriod: 8, longPeriod: 21, signalPeriod: 6, rsiPeriod: 10 };
-    case 10:
+    case "1":
+      return {
+        shortPeriod: 5,
+        longPeriod: 13,
+        signalPeriod: 4,
+        rsiPeriod: 8,
+        rsiOverBougth: 55, // RSI 과매수
+        rsiOverSold: 45, // RSI 과매도
+      };
+    case "5":
+      return {
+        shortPeriod: 6,
+        longPeriod: 15,
+        signalPeriod: 5,
+        rsiPeriod: 10,
+        rsiOverBougth: 57, // RSI 과매수
+        rsiOverSold: 43, // RSI 과매도
+      };
+    case "10":
+      return {
+        shortPeriod: 8,
+        longPeriod: 21,
+        signalPeriod: 5,
+        rsiPeriod: 10,
+        rsiOverBougth: 60, // RSI 과매수
+        rsiOverSold: 40, // RSI 과매도
+      };
+    case "30":
       return {
         shortPeriod: 10,
         longPeriod: 24,
-        signalPeriod: 8,
+        signalPeriod: 6,
         rsiPeriod: 12,
+        rsiOverBougth: 62, // RSI 과매수
+        rsiOverSold: 38, // RSI 과매도
       };
-    case 30:
+    case "60":
       return {
-        shortPeriod: 20,
-        longPeriod: 50,
-        signalPeriod: 12,
-        rsiPeriod: 20,
+        shortPeriod: 12,
+        longPeriod: 26,
+        signalPeriod: 9,
+        rsiPeriod: 14,
+        rsiOverBougth: 65, // RSI 과매수
+        rsiOverSold: 35, // RSI 과매도
       };
-    case 60:
+    case "240":
       return {
-        shortPeriod: 24,
-        longPeriod: 55,
-        signalPeriod: 14,
-        rsiPeriod: 20,
-      };
-    case 240:
-      return {
-        shortPeriod: 36,
-        longPeriod: 78,
-        signalPeriod: 18,
-        rsiPeriod: 28,
+        shortPeriod: 16,
+        longPeriod: 34,
+        signalPeriod: 9,
+        rsiPeriod: 14,
+        rsiOverBougth: 70, // RSI 과매수
+        rsiOverSold: 30, // RSI 과매도
       };
     default:
-      return { shortPeriod: 12, longPeriod: 26, signalPeriod: 9, rsiPeriod: 7 };
+      return {
+        shortPeriod: 12,
+        longPeriod: 26,
+        signalPeriod: 9,
+        rsiPeriod: 7,
+        rsiOverBougth: 70, // RSI 과매수
+        rsiOverSold: 30, // RSI 과매도
+      };
   }
 }
 
@@ -86,12 +115,12 @@ export default function ChartBitHook() {
     UseFetch();
   const [market, setMarket] = useState("");
   const minuteOptions = [
-    { key: 0, value: 1 },
-    { key: 1, value: 5 },
-    { key: 2, value: 10 },
-    { key: 3, value: 30 },
-    { key: 4, value: 60 },
-    { key: 5, value: 240 },
+    { key: 0, value: "1" },
+    { key: 1, value: "5" },
+    { key: 2, value: "10" },
+    { key: 3, value: "30" },
+    { key: 4, value: "60" },
+    { key: 5, value: "240" },
   ];
   const [minute, setMinute] = useState(minuteOptions[1].value);
   const [date, setDate] = useState("");
@@ -131,8 +160,16 @@ export default function ChartBitHook() {
       const timestamps = data.map((d) => d.candle_date_time_kst.slice(0, 16));
       const close = data.map((d) => d.trade_price);
 
-      const { shortPeriod, longPeriod, signalPeriod, rsiPeriod } =
-        getMACDParams(minute); // '1', '5', '60' 등
+      const {
+        shortPeriod,
+        longPeriod,
+        signalPeriod,
+        rsiPeriod,
+        rsiOverBougth,
+        rsiOverSold,
+      } = getMACDParams(minute); // '1', '5', '60' 등
+
+      // console.log("rsiOverBougth rsiOverSold", rsiOverBougth, rsiOverSold);
 
       const {
         macd,
@@ -147,7 +184,9 @@ export default function ChartBitHook() {
         shortPeriod,
         longPeriod,
         signalPeriod,
-        rsiPeriod
+        rsiPeriod,
+        rsiOverBougth,
+        rsiOverSold
       );
 
       setTrades(tradeList);
@@ -378,14 +417,19 @@ function calculateMACDAndTrades(
   shortPeriod = 12,
   longPeriod = 26,
   signalPeriod = 9,
-  rsiPeriod = 14
+  rsiPeriod = 14,
+  rsiOverBougth = 30,
+  rsiOverSold = 70
 ) {
-  // console.log("Calculating MACD and trades with params:", {
+  // console.log(
+  //   "calculateMACDAndTrades called with params:",
   //   shortPeriod,
   //   longPeriod,
   //   signalPeriod,
   //   rsiPeriod,
-  // });
+  //   rsiOverBougth,
+  //   rsiOverSold
+  // );
 
   const ema = (data, period) => {
     const k = 2 / (period + 1);
@@ -452,7 +496,7 @@ function calculateMACDAndTrades(
     // console.log(`${inPosition} ${prevDiff} ${currDiff} ${rsi[i]}`);
 
     // MACD 골든크로스 + RSI 과매도 원래는 30
-    if (!inPosition && prevDiff < 0 && currDiff > 0 && rsi[i] < 40) {
+    if (!inPosition && prevDiff < 0 && currDiff > 0 && rsi[i] < rsiOverSold) {
       // if (!inPosition && prevDiff < 0 && currDiff > 0) {
       buySignals[i] = closePrices[i];
       inPosition = true;
@@ -461,7 +505,7 @@ function calculateMACDAndTrades(
     }
 
     // MACD 데드크로스 + RSI 과매수 원래는 70
-    if (inPosition && prevDiff > 0 && currDiff < 0 && rsi[i] > 60) {
+    if (inPosition && prevDiff > 0 && currDiff < 0 && rsi[i] > rsiOverBougth) {
       // if (inPosition && prevDiff > 0 && currDiff < 0) {
       sellSignals[i] = closePrices[i];
       const exitPrice = closePrices[i];
