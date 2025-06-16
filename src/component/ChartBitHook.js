@@ -37,19 +37,27 @@ function getMACDParams(timeframe) {
         shortPeriod: 5,
         longPeriod: 13,
         signalPeriod: 4,
-        rsiPeriod: 8,
+        rsiPeriod: 9,
         rsiOverBougth: 55, // RSI 과매수
         rsiOverSold: 45, // RSI 과매도
       };
     case "5":
       return {
-        shortPeriod: 6,
-        longPeriod: 15,
-        signalPeriod: 5,
-        rsiPeriod: 10,
-        rsiOverBougth: 57, // RSI 과매수
-        rsiOverSold: 43, // RSI 과매도
+        shortPeriod: 5,
+        longPeriod: 13,
+        signalPeriod: 4,
+        rsiPeriod: 14,
+        rsiOverBougth: 50, // RSI 과매수
+        rsiOverSold: 50, // RSI 과매도
       };
+    // return {
+    //   shortPeriod: 6,
+    //   longPeriod: 15,
+    //   signalPeriod: 5,
+    //   rsiPeriod: 10,
+    //   rsiOverBougth: 57, // RSI 과매수
+    //   rsiOverSold: 43, // RSI 과매도
+    // };
     case "10":
       return {
         shortPeriod: 8,
@@ -91,7 +99,7 @@ function getMACDParams(timeframe) {
         shortPeriod: 12,
         longPeriod: 26,
         signalPeriod: 9,
-        rsiPeriod: 7,
+        rsiPeriod: 14,
         rsiOverBougth: 70, // RSI 과매수
         rsiOverSold: 30, // RSI 과매도
       };
@@ -108,7 +116,7 @@ function formatSmartNumber(value, digits = 8) {
 
 export default function ChartBitHook() {
   const [macdData, setMacdData] = useState(null);
-  const [rsiData, setRsiData] = useState(null);
+  const [rsiAndStochasticData, setRsiAndStochasticData] = useState(null);
   const [trades, setTrades] = useState([]);
   const [{ isLoading, data: markets }] = UseFetch(requests.fetchMarketAll);
   const [{ isLoading: isCandleLoading, data: candles }, setCandelUrl] =
@@ -159,6 +167,8 @@ export default function ChartBitHook() {
 
       const timestamps = data.map((d) => d.candle_date_time_kst.slice(0, 16));
       const close = data.map((d) => d.trade_price);
+      const high = data.map((d) => d.high_price); //고가
+      const low = data.map((d) => d.low_price); //저가
 
       const {
         shortPeriod,
@@ -175,12 +185,16 @@ export default function ChartBitHook() {
         macd,
         signal,
         rsi,
+        stochK,
+        stochD,
         buySignals,
         sellSignals,
         trades: tradeList,
       } = calculateMACDAndTrades(
         close,
         timestamps,
+        high,
+        low,
         shortPeriod,
         longPeriod,
         signalPeriod,
@@ -200,7 +214,7 @@ export default function ChartBitHook() {
             borderColor: "#1EAFED", // 파란색
             yAxisID: "y",
             borderWidth: 1,
-            pointRadius: 1,
+            pointRadius: 0.5,
           },
           {
             label: "MACD",
@@ -208,7 +222,7 @@ export default function ChartBitHook() {
             borderColor: "#17B978", // 초록색
             yAxisID: "y1",
             borderWidth: 1,
-            pointRadius: 0,
+            pointRadius: 0.5,
           },
           {
             label: "Signal",
@@ -217,7 +231,7 @@ export default function ChartBitHook() {
             borderDash: [5, 5],
             yAxisID: "y1",
             borderWidth: 1,
-            pointRadius: 0,
+            pointRadius: 1,
           },
           {
             label: "Buy",
@@ -242,14 +256,31 @@ export default function ChartBitHook() {
         ],
       });
 
-      setRsiData({
-        labels: timestamps,
+      // 차트 데이터 구성
+      setRsiAndStochasticData({
+        labels: timestamps.slice(-stochK.length), // 가장 최근 값 기준
         datasets: [
           {
             label: "RSI",
-            data: rsi,
-            borderColor: "purple", // 보라색
+            data: rsi.slice(-stochK.length), // 길이 맞춰 자르기
+            borderColor: "purple",
             backgroundColor: "purple",
+            borderWidth: 1,
+            pointRadius: 1,
+          },
+          {
+            label: "%K",
+            data: stochK,
+            borderColor: "green",
+            backgroundColor: "green",
+            borderWidth: 1,
+            pointRadius: 1,
+          },
+          {
+            label: "%D",
+            data: stochD,
+            borderColor: "orange",
+            backgroundColor: "orange",
             borderWidth: 1,
             pointRadius: 1,
           },
@@ -314,39 +345,75 @@ export default function ChartBitHook() {
     },
   };
 
-  const rsiChartOptions = {
+  const rsiAndStochasticChartOptions = {
     responsive: true,
-    plugins: {
-      legend: {
-        position: "top",
-      },
-      annotation: {
-        annotations: {
-          avarage: {
-            type: "box",
-            yMin: 30,
-            yMax: 70,
-            backgroundColor: "rgba(193, 99, 255, 0.2)",
+    scales: {
+      y: {
+        min: 0,
+        max: 100,
+        title: {
+          display: true,
+          text: "지표값 (0~100)",
+        },
+        ticks: {
+          stepSize: 20,
+          callback: function (value) {
+            return formatSmartNumber(value, 8); // 최대 8자리까지 표시
           },
         },
+        grid: {
+          color: "#eee",
+        },
       },
-    },
-    scales: {
       x: {
         type: "time",
         time: {
-          tooltipFormat: "MMM dd HH:mm",
+          tooltipFormat: "MMM dd HH:mm", // 툴팁 포맷
           displayFormats: {
             minute: "HH:mm",
             hour: "MMM dd HH:mm",
           },
         },
-      },
-      y: {
-        min: 0,
-        max: 100,
         ticks: {
-          stepSize: 10,
+          autoSkip: true,
+          maxTicksLimit: 20,
+        },
+      },
+    },
+    plugins: {
+      legend: {
+        position: "top",
+        labels: {
+          usePointStyle: true,
+        },
+      },
+      tooltip: {
+        mode: "index",
+        intersect: false,
+      },
+      annotation: {
+        annotations: {
+          overboughtZone: {
+            type: "box",
+            yMin: 70,
+            yMax: 100,
+            backgroundColor: "rgba(255, 99, 132, 0.1)", // 연한 붉은색
+            borderWidth: 0,
+          },
+          midOverboughtZone: {
+            type: "box",
+            yMin: 80,
+            yMax: 100,
+            backgroundColor: "rgba(255, 99, 132, 0.15)", // 더 진한 붉은색
+            borderWidth: 0,
+          },
+          oversoldZone: {
+            type: "box",
+            yMin: 0,
+            yMax: 30,
+            backgroundColor: "rgba(54, 162, 235, 0.1)", // 연한 파란색
+            borderWidth: 0,
+          },
         },
       },
     },
@@ -372,10 +439,13 @@ export default function ChartBitHook() {
           ) : (
             <p>Loading...</p>
           )}
-          {rsiData && (
-            <div className="rsi-chart-box">
-              <h4>RSI지표</h4>
-              <Line data={rsiData} options={rsiChartOptions} />
+          {rsiAndStochasticData && (
+            <div className="rsi-stochastic-chart-box">
+              <h4>RSI + 스토캐스틱 Slow</h4>
+              <Line
+                data={rsiAndStochasticData}
+                options={rsiAndStochasticChartOptions}
+              />
             </div>
           )}
         </div>
@@ -414,23 +484,17 @@ export default function ChartBitHook() {
 function calculateMACDAndTrades(
   closePrices,
   timestamps,
+  highPrices, // 고가
+  lowPrices, // 저가
   shortPeriod = 12,
   longPeriod = 26,
   signalPeriod = 9,
   rsiPeriod = 14,
   rsiOverBougth = 30,
-  rsiOverSold = 70
+  rsiOverSold = 70,
+  stochPeriod = 14,
+  stochSignal = 3
 ) {
-  // console.log(
-  //   "calculateMACDAndTrades called with params:",
-  //   shortPeriod,
-  //   longPeriod,
-  //   signalPeriod,
-  //   rsiPeriod,
-  //   rsiOverBougth,
-  //   rsiOverSold
-  // );
-
   const ema = (data, period) => {
     const k = 2 / (period + 1);
     let emaArray = [data[0]];
@@ -469,6 +533,35 @@ function calculateMACDAndTrades(
     return rsi;
   };
 
+  const calculateStochastic = (closes, highs, lows, period, signalPeriod) => {
+    const kValues = Array(closes.length).fill(null);
+    const dValues = Array(closes.length).fill(null);
+
+    for (let i = period - 1; i < closes.length; i++) {
+      const highSlice = highs.slice(i - period + 1, i + 1);
+      const lowSlice = lows.slice(i - period + 1, i + 1);
+
+      const highestHigh = Math.max(...highSlice);
+      const lowestLow = Math.min(...lowSlice);
+      const currentClose = closes[i];
+
+      const k = ((currentClose - lowestLow) / (highestHigh - lowestLow)) * 100;
+      kValues[i] = k;
+    }
+
+    for (let i = period + signalPeriod - 2; i < closes.length; i++) {
+      const slice = kValues
+        .slice(i - signalPeriod + 1, i + 1)
+        .filter((v) => v !== null);
+      if (slice.length === signalPeriod) {
+        const d = slice.reduce((a, b) => a + b, 0) / signalPeriod;
+        dValues[i] = d;
+      }
+    }
+
+    return { kValues, dValues };
+  };
+
   const shortEMA = ema(closePrices, shortPeriod);
   const longEMA = ema(closePrices, longPeriod);
   const macd = shortEMA.map((val, i) => val - longEMA[i]);
@@ -478,6 +571,13 @@ function calculateMACDAndTrades(
     .concat(signal);
 
   const rsi = calculateRSI(closePrices, rsiPeriod);
+  const { kValues: stochK, dValues: stochD } = calculateStochastic(
+    closePrices,
+    highPrices,
+    lowPrices,
+    stochPeriod,
+    stochSignal
+  );
 
   const buySignals = Array(closePrices.length).fill(null);
   const sellSignals = Array(closePrices.length).fill(null);
@@ -488,25 +588,34 @@ function calculateMACDAndTrades(
   let entryIndex = null;
 
   for (let i = 1; i < macd.length; i++) {
-    if (fullSignal[i] == null || rsi[i] == null) continue;
+    if (fullSignal[i] == null || rsi[i] == null || stochK[i] == null) continue;
 
     const prevDiff = macd[i - 1] - fullSignal[i - 1];
     const currDiff = macd[i] - fullSignal[i];
 
-    // console.log(`${inPosition} ${prevDiff} ${currDiff} ${rsi[i]}`);
+    const k = stochK[i];
 
-    // MACD 골든크로스 + RSI 과매도 원래는 30
-    if (!inPosition && prevDiff < 0 && currDiff > 0 && rsi[i] < rsiOverSold) {
-      // if (!inPosition && prevDiff < 0 && currDiff > 0) {
+    // 🟢 매수 조건: 골든크로스 + RSI 과매도 + Stochastic < 20
+    if (
+      !inPosition &&
+      prevDiff < 0 &&
+      currDiff > 0 &&
+      rsi[i] < rsiOverSold &&
+      k < 20
+    ) {
       buySignals[i] = closePrices[i];
       inPosition = true;
       entryPrice = closePrices[i];
       entryIndex = i;
     }
 
-    // MACD 데드크로스 + RSI 과매수 원래는 70
-    if (inPosition && prevDiff > 0 && currDiff < 0 && rsi[i] > rsiOverBougth) {
-      // if (inPosition && prevDiff > 0 && currDiff < 0) {
+    // 🔴 매도 조건: 데드크로스 + RSI 과매수 + Stochastic > 80
+    if (
+      inPosition &&
+      prevDiff > 0 &&
+      currDiff < 0 &&
+      (rsi[i] > rsiOverBougth || k > 70)
+    ) {
       sellSignals[i] = closePrices[i];
       const exitPrice = closePrices[i];
       const gain = ((exitPrice - entryPrice) / entryPrice) * 100;
@@ -521,10 +630,14 @@ function calculateMACDAndTrades(
     }
   }
 
-  /* const rsiValid = rsi.filter((v) => v != null);
-  const minRSI = Math.min(...rsiValid);
-  const maxRSI = Math.max(...rsiValid);
-  console.log("RSI range:", minRSI.toFixed(2), "-", maxRSI.toFixed(2)); */
-
-  return { macd, signal: fullSignal, rsi, buySignals, sellSignals, trades };
+  return {
+    macd,
+    signal: fullSignal,
+    rsi,
+    stochK,
+    stochD,
+    buySignals,
+    sellSignals,
+    trades,
+  };
 }
