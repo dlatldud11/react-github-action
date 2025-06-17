@@ -37,15 +37,15 @@ function getMACDParams(timeframe) {
         shortPeriod: 5,
         longPeriod: 13,
         signalPeriod: 4,
-        rsiPeriod: 9,
+        rsiPeriod: 14,
         rsiOverBougth: 55, // RSI 과매수
         rsiOverSold: 45, // RSI 과매도
       };
     case "5":
       return {
-        shortPeriod: 5,
-        longPeriod: 13,
-        signalPeriod: 4,
+        shortPeriod: 2,
+        longPeriod: 4,
+        signalPeriod: 2,
         rsiPeriod: 14,
         rsiOverBougth: 50, // RSI 과매수
         rsiOverSold: 50, // RSI 과매도
@@ -63,7 +63,7 @@ function getMACDParams(timeframe) {
         shortPeriod: 8,
         longPeriod: 21,
         signalPeriod: 5,
-        rsiPeriod: 10,
+        rsiPeriod: 14,
         rsiOverBougth: 60, // RSI 과매수
         rsiOverSold: 40, // RSI 과매도
       };
@@ -72,7 +72,7 @@ function getMACDParams(timeframe) {
         shortPeriod: 10,
         longPeriod: 24,
         signalPeriod: 6,
-        rsiPeriod: 12,
+        rsiPeriod: 14,
         rsiOverBougth: 62, // RSI 과매수
         rsiOverSold: 38, // RSI 과매도
       };
@@ -135,7 +135,7 @@ export default function ChartBitHook() {
 
   useEffect(() => {
     if (markets && markets.length > 0) {
-      setMarket(markets[0].market); // 마켓 목록 불러왔을 때 첫 번째 마켓으로 초기화
+      setMarket(markets[3].market); // 마켓 목록 불러왔을 때 첫 번째 마켓으로 초기화
     }
   }, [markets]);
 
@@ -614,7 +614,8 @@ function calculateMACDAndTrades(
       inPosition &&
       prevDiff > 0 &&
       currDiff < 0 &&
-      (rsi[i] > rsiOverBougth || k > 70)
+      rsi[i] > rsiOverBougth &&
+      k > 70
     ) {
       sellSignals[i] = closePrices[i];
       const exitPrice = closePrices[i];
