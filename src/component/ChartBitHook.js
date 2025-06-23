@@ -135,7 +135,7 @@ export default function ChartBitHook() {
 
   useEffect(() => {
     if (markets && markets.length > 0) {
-      setMarket(markets[3].market); // 마켓 목록 불러왔을 때 첫 번째 마켓으로 초기화
+      setMarket(markets[1].market); // 마켓 목록 불러왔을 때 첫 번째 마켓으로 초기화
     }
   }, [markets]);
 
