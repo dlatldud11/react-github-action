@@ -653,8 +653,8 @@ function calculateMACDAndTrades(
         if(skipCnt > 4){
           const profit = ((exitPrice - entryPrice) / entryPrice) * 100;
 
-          if(profit >= 2.5){
-            console.log(`손절기준 2.5퍼센트보다 더 손실이므로 청산 ${profit}`);
+          if(profit >= -2.5){
+            console.log(`손절기준 -2.5퍼센트보다 더 손실이므로 청산 ${profit}`);
             const gain = ((exitPrice - entryPrice) / entryPrice) * 100;
             trades.push({
               entryTime: timestamps[entryIndex],
