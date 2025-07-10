@@ -588,7 +588,7 @@ function calculateMACDAndTrades(
   let entryIndex = null;
 
   let skip = false; //SKIP 플래그
-  let skipCnt = 0; //SKIP 카운팅
+  // let skipCnt = 0; //SKIP 카운팅
 
   for (let i = 1; i < macd.length; i++) {
     if (fullSignal[i] == null || rsi[i] == null || stochK[i] == null) continue;
@@ -613,7 +613,7 @@ function calculateMACDAndTrades(
       entryIndex = i;
 
       skip = false;
-      skipCnt = 0;
+      // skipCnt = 0;
 
       continue;
     }
@@ -634,7 +634,7 @@ function calculateMACDAndTrades(
       if(exitPrice < entryPrice){
         console.log(`매도시그널 캔들가가 더 비싸므로 skip flag 키고 매도 skip entryPrice: ${entryPrice} exitPrice: ${exitPrice}`);
         skip = true;
-        skipCnt++;
+        // skipCnt++;
         continue;
       }
       else{
@@ -648,7 +648,7 @@ function calculateMACDAndTrades(
         });
         inPosition = false;
         skip = false;
-        skipCnt = 0;
+        // skipCnt = 0;
       }
 
     }
