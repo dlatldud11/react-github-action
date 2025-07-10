@@ -631,6 +631,7 @@ function calculateMACDAndTrades(
         console.log(`매도시그널 캔들가가 더 비싸므로 skip flag 키고 매도 skip entryPrice: ${entryPrice} exitPrice: ${exitPrice}`);
         skip = true;
         skipCnt = 0;
+        continue;
       }
       else{
         const gain = ((exitPrice - entryPrice) / entryPrice) * 100;
@@ -642,9 +643,9 @@ function calculateMACDAndTrades(
           gain: gain.toFixed(2),
         });
         inPosition = false;
+        skip = false;
+        skipCnt = 0;
       }
-
-      continue;
 
     }else if(inPosition &&
       skip
@@ -670,14 +671,17 @@ function calculateMACDAndTrades(
             inPosition = false;
             skip = false;
             skipCnt = 0;
+
           }else{
             skipCnt++;
             console.log(`매도시그널 캔들가가 더 비싸므로 skipCnt++ 매도 skip skipCnt: ${skipCnt}`);
+
           }
         }
         else{
           skipCnt++;
           console.log(`매도시그널 캔들가가 더 비싸므로 skipCnt++ 매도 skip skipCnt: ${skipCnt} `);
+
         }
       }else{
         const gain = ((exitPrice - entryPrice) / entryPrice) * 100;
@@ -691,9 +695,8 @@ function calculateMACDAndTrades(
         inPosition = false;
         skip = false;
         skipCnt = 0;
+        
     }
-
-    continue;
   }
 }
 
