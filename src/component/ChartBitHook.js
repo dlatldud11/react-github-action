@@ -587,6 +587,9 @@ function calculateMACDAndTrades(
   let entryPrice = null;
   let entryIndex = null;
 
+  let skip = false; //SKIP 플래그
+  let skipCnt = 0; //SKIP 카운팅
+
   for (let i = 1; i < macd.length; i++) {
     if (fullSignal[i] == null || rsi[i] == null || stochK[i] == null) continue;
 
@@ -594,9 +597,6 @@ function calculateMACDAndTrades(
     const currDiff = macd[i] - fullSignal[i];
 
     const k = stochK[i];
-
-    let skip = false; //SKIP 플래그
-    let skipCnt = 0; //SKIP 카운팅
 
     // 🟢 매수 조건: 골든크로스 + RSI 과매도 + Stochastic < 20
     if (
@@ -653,7 +653,7 @@ function calculateMACDAndTrades(
         if(skipCnt > 4){
           const profit = ((exitPrice - entryPrice) / entryPrice) * 100;
 
-          if(profit >= -2.5){
+          if(profit <= -2.5){
             console.log(`손절기준 -2.5퍼센트보다 더 손실이므로 청산 ${profit}`);
             const gain = ((exitPrice - entryPrice) / entryPrice) * 100;
             trades.push({
