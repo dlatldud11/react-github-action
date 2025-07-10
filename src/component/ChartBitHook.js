@@ -595,8 +595,8 @@ function calculateMACDAndTrades(
 
     const k = stochK[i];
 
-    const skip = false; //SKIP 플래그
-    const skipCnt = 0; //SKIP 카운팅
+    let skip = false; //SKIP 플래그
+    let skipCnt = 0; //SKIP 카운팅
 
     // 🟢 매수 조건: 골든크로스 + RSI 과매도 + Stochastic < 20
     if (
@@ -645,6 +645,10 @@ function calculateMACDAndTrades(
     }else if(inPosition &&
       skip
     ){
+
+      sellSignals[i] = closePrices[i];
+      const exitPrice = closePrices[i];
+
       if(exitPrice < entryPrice){
         if(skipCnt > 4){
           const profit = ((exitPrice - entryPrice) / entryPrice) * 100;
