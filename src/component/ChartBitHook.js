@@ -664,6 +664,8 @@ function calculateMACDAndTrades(
               gain: gain.toFixed(2),
             });
             inPosition = false;
+            skip = false;
+            skipCnt = 0;
           }else{
             skipCnt++;
             console.log(`매도시그널 캔들가가 더 비싸므로 skipCnt++ 매도 skip skipCnt: ${skipCnt}`);
