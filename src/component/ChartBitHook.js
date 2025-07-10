@@ -588,7 +588,7 @@ function calculateMACDAndTrades(
   let entryIndex = null;
 
   let skip = false; //SKIP 플래그
-  // let skipCnt = 0; //SKIP 카운팅
+  let skipCnt = 0; //SKIP 카운팅
 
   for (let i = 1; i < macd.length; i++) {
     if (fullSignal[i] == null || rsi[i] == null || stochK[i] == null) continue;
@@ -613,7 +613,7 @@ function calculateMACDAndTrades(
       entryIndex = i;
 
       skip = false;
-      // skipCnt = 0;
+      skipCnt = 0;
 
       continue;
     }
@@ -628,16 +628,17 @@ function calculateMACDAndTrades(
       !skip
     ) {
 
-      sellSignals[i] = closePrices[i];
       const exitPrice = closePrices[i];
-
+      
       if(exitPrice < entryPrice){
         console.log(`매도시그널 캔들가가 더 비싸므로 skip flag 키고 매도 skip entryPrice: ${entryPrice} exitPrice: ${exitPrice}`);
         skip = true;
-        // skipCnt++;
+        skipCnt++;
         continue;
       }
       else{
+        sellSignals[i] = closePrices[i];
+
         const gain = ((exitPrice - entryPrice) / entryPrice) * 100;
         trades.push({
           entryTime: timestamps[entryIndex],
@@ -648,61 +649,64 @@ function calculateMACDAndTrades(
         });
         inPosition = false;
         skip = false;
-        // skipCnt = 0;
+        skipCnt = 0;
       }
 
     }
-    // else if(inPosition &&
-    //   skip
-    // ){
+    else if(inPosition &&
+      skip
+    ){
 
-    //   sellSignals[i] = closePrices[i];
-    //   const exitPrice = closePrices[i];
-
-    //   if(exitPrice < entryPrice){
-    //     if(skipCnt > 4){
-    //       const profit = ((exitPrice - entryPrice) / entryPrice) * 100;
-
-    //       if(profit <= -2.5){
-    //         console.log(`손절기준 -2.5퍼센트보다 더 손실이므로 청산 ${profit}`);
-    //         const gain = ((exitPrice - entryPrice) / entryPrice) * 100;
-    //         trades.push({
-    //           entryTime: timestamps[entryIndex],
-    //           exitTime: timestamps[i],
-    //           entryPrice,
-    //           exitPrice,
-    //           gain: gain.toFixed(2),
-    //         });
-    //         inPosition = false;
-    //         skip = false;
-    //         skipCnt = 0;
-
-    //       }else{
-    //         skipCnt++;
-    //         console.log(`매도시그널 캔들가가 더 비싸므로 skipCnt++ 매도 skip skipCnt: ${skipCnt}`);
-            
-    //         continue;
-    //       }
-    //     }
-    //     else{
-    //       skipCnt++;
-    //       console.log(`매도시그널 캔들가가 더 비싸므로 skipCnt++ 매도 skip skipCnt: ${skipCnt} `);
+      const exitPrice = closePrices[i];
+      
+      if(exitPrice < entryPrice){
+        if(skipCnt > 4){
+          const profit = ((exitPrice - entryPrice) / entryPrice) * 100;
           
-    //     }
-    //   }else{
-    //     const gain = ((exitPrice - entryPrice) / entryPrice) * 100;
-    //     trades.push({
-    //       entryTime: timestamps[entryIndex],
-    //       exitTime: timestamps[i],
-    //       entryPrice,
-    //       exitPrice,
-    //       gain: gain.toFixed(2),
-    //     });
-    //     inPosition = false;
-    //     skip = false;
-    //     skipCnt = 0;
-    // }
-  // }
+          if(profit <= -2.5){
+            console.log(`손절기준 -2.5퍼센트보다 더 손실이므로 청산 ${profit}`);
+            sellSignals[i] = closePrices[i];
+
+            const gain = ((exitPrice - entryPrice) / entryPrice) * 100;
+            trades.push({
+              entryTime: timestamps[entryIndex],
+              exitTime: timestamps[i],
+              entryPrice,
+              exitPrice,
+              gain: gain.toFixed(2),
+            });
+            inPosition = false;
+            skip = false;
+            skipCnt = 0;
+            
+          }else{
+            skipCnt++;
+            console.log(`매도시그널 캔들가가 더 비싸므로 skipCnt++ 매도 skip skipCnt: ${skipCnt}`);
+            
+            continue;
+          }
+        }
+        else{
+          skipCnt++;
+          console.log(`매도시그널 캔들가가 더 비싸므로 skipCnt++ 매도 skip skipCnt: ${skipCnt} `);
+          
+        }
+      }else{
+        sellSignals[i] = closePrices[i];
+        
+        const gain = ((exitPrice - entryPrice) / entryPrice) * 100;
+        trades.push({
+          entryTime: timestamps[entryIndex],
+          exitTime: timestamps[i],
+          entryPrice,
+          exitPrice,
+          gain: gain.toFixed(2),
+        });
+        inPosition = false;
+        skip = false;
+        skipCnt = 0;
+    }
+  }
 }
 
   return {
