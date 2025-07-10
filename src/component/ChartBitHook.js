@@ -595,6 +595,9 @@ function calculateMACDAndTrades(
 
     const k = stochK[i];
 
+    const skip = false; //SKIP 플래그
+    const skipCnt = 0; //SKIP 카운팅
+
     // 🟢 매수 조건: 골든크로스 + RSI 과매도 + Stochastic < 20
     if (
       !inPosition &&
@@ -615,21 +618,72 @@ function calculateMACDAndTrades(
       prevDiff > 0 &&
       currDiff < 0 &&
       rsi[i] > rsiOverBougth &&
-      k > 70
+      k > 70 &&
+      !skip
     ) {
+
       sellSignals[i] = closePrices[i];
       const exitPrice = closePrices[i];
-      const gain = ((exitPrice - entryPrice) / entryPrice) * 100;
-      trades.push({
-        entryTime: timestamps[entryIndex],
-        exitTime: timestamps[i],
-        entryPrice,
-        exitPrice,
-        gain: gain.toFixed(2),
-      });
-      inPosition = false;
+
+      if(exitPrice < entryPrice){
+        console.log(`매도시그널 캔들가가 더 비싸므로 skip flag 키고 매도 skip entryPrice: ${entryPrice} exitPrice: ${exitPrice}`);
+        skip = true;
+        skipCnt = 0;
+      }
+      else{
+        const gain = ((exitPrice - entryPrice) / entryPrice) * 100;
+        trades.push({
+          entryTime: timestamps[entryIndex],
+          exitTime: timestamps[i],
+          entryPrice,
+          exitPrice,
+          gain: gain.toFixed(2),
+        });
+        inPosition = false;
+      }
+
+    }else if(inPosition &&
+      skip
+    ){
+      if(exitPrice < entryPrice){
+        if(skipCnt > 4){
+          const profit = ((exitPrice - entryPrice) / entryPrice) * 100;
+
+          if(profit >= 2.5){
+            console.log(`손절기준 2.5퍼센트보다 더 손실이므로 청산 ${profit}`);
+            const gain = ((exitPrice - entryPrice) / entryPrice) * 100;
+            trades.push({
+              entryTime: timestamps[entryIndex],
+              exitTime: timestamps[i],
+              entryPrice,
+              exitPrice,
+              gain: gain.toFixed(2),
+            });
+            inPosition = false;
+          }else{
+            skipCnt++;
+            console.log(`매도시그널 캔들가가 더 비싸므로 skipCnt++ 매도 skip skipCnt: ${skipCnt}`);
+          }
+        }
+        else{
+          skipCnt++;
+          console.log(`매도시그널 캔들가가 더 비싸므로 skipCnt++ 매도 skip skipCnt: ${skipCnt} `);
+        }
+      }else{
+        const gain = ((exitPrice - entryPrice) / entryPrice) * 100;
+        trades.push({
+          entryTime: timestamps[entryIndex],
+          exitTime: timestamps[i],
+          entryPrice,
+          exitPrice,
+          gain: gain.toFixed(2),
+        });
+        inPosition = false;
+        skip = false;
+        skipCnt = 0;
     }
   }
+}
 
   return {
     macd,
