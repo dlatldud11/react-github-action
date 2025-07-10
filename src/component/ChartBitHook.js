@@ -612,6 +612,9 @@ function calculateMACDAndTrades(
       entryPrice = closePrices[i];
       entryIndex = i;
 
+      skip = false;
+      skipCnt = 0;
+
       continue;
     }
 
@@ -631,6 +634,7 @@ function calculateMACDAndTrades(
       if(exitPrice < entryPrice){
         console.log(`매도시그널 캔들가가 더 비싸므로 skip flag 키고 매도 skip entryPrice: ${entryPrice} exitPrice: ${exitPrice}`);
         skip = true;
+        skipCnt++;
         continue;
       }
       else{
