@@ -647,57 +647,58 @@ function calculateMACDAndTrades(
         skipCnt = 0;
       }
 
-    }else if(inPosition &&
-      skip
-    ){
-
-      sellSignals[i] = closePrices[i];
-      const exitPrice = closePrices[i];
-
-      if(exitPrice < entryPrice){
-        if(skipCnt > 4){
-          const profit = ((exitPrice - entryPrice) / entryPrice) * 100;
-
-          if(profit <= -2.5){
-            console.log(`손절기준 -2.5퍼센트보다 더 손실이므로 청산 ${profit}`);
-            const gain = ((exitPrice - entryPrice) / entryPrice) * 100;
-            trades.push({
-              entryTime: timestamps[entryIndex],
-              exitTime: timestamps[i],
-              entryPrice,
-              exitPrice,
-              gain: gain.toFixed(2),
-            });
-            inPosition = false;
-            skip = false;
-            skipCnt = 0;
-
-          }else{
-            skipCnt++;
-            console.log(`매도시그널 캔들가가 더 비싸므로 skipCnt++ 매도 skip skipCnt: ${skipCnt}`);
-            
-            continue;
-          }
-        }
-        else{
-          skipCnt++;
-          console.log(`매도시그널 캔들가가 더 비싸므로 skipCnt++ 매도 skip skipCnt: ${skipCnt} `);
-          
-        }
-      }else{
-        const gain = ((exitPrice - entryPrice) / entryPrice) * 100;
-        trades.push({
-          entryTime: timestamps[entryIndex],
-          exitTime: timestamps[i],
-          entryPrice,
-          exitPrice,
-          gain: gain.toFixed(2),
-        });
-        inPosition = false;
-        skip = false;
-        skipCnt = 0;
     }
-  }
+    // else if(inPosition &&
+    //   skip
+    // ){
+
+    //   sellSignals[i] = closePrices[i];
+    //   const exitPrice = closePrices[i];
+
+    //   if(exitPrice < entryPrice){
+    //     if(skipCnt > 4){
+    //       const profit = ((exitPrice - entryPrice) / entryPrice) * 100;
+
+    //       if(profit <= -2.5){
+    //         console.log(`손절기준 -2.5퍼센트보다 더 손실이므로 청산 ${profit}`);
+    //         const gain = ((exitPrice - entryPrice) / entryPrice) * 100;
+    //         trades.push({
+    //           entryTime: timestamps[entryIndex],
+    //           exitTime: timestamps[i],
+    //           entryPrice,
+    //           exitPrice,
+    //           gain: gain.toFixed(2),
+    //         });
+    //         inPosition = false;
+    //         skip = false;
+    //         skipCnt = 0;
+
+    //       }else{
+    //         skipCnt++;
+    //         console.log(`매도시그널 캔들가가 더 비싸므로 skipCnt++ 매도 skip skipCnt: ${skipCnt}`);
+            
+    //         continue;
+    //       }
+    //     }
+    //     else{
+    //       skipCnt++;
+    //       console.log(`매도시그널 캔들가가 더 비싸므로 skipCnt++ 매도 skip skipCnt: ${skipCnt} `);
+          
+    //     }
+    //   }else{
+    //     const gain = ((exitPrice - entryPrice) / entryPrice) * 100;
+    //     trades.push({
+    //       entryTime: timestamps[entryIndex],
+    //       exitTime: timestamps[i],
+    //       entryPrice,
+    //       exitPrice,
+    //       gain: gain.toFixed(2),
+    //     });
+    //     inPosition = false;
+    //     skip = false;
+    //     skipCnt = 0;
+    // }
+  // }
 }
 
   return {
