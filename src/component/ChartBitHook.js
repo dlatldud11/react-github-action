@@ -660,11 +660,11 @@ function calculateMACDAndTrades(
       const exitPrice = closePrices[i];
       
       if(exitPrice < entryPrice){
-        if(skipCnt > 4){
+        if(skipCnt > 10){
           const profit = ((exitPrice - entryPrice) / entryPrice) * 100;
           
-          if(profit <= -2.5){
-            console.log(`손절기준 -2.5퍼센트보다 더 손실이므로 청산 ${profit}`);
+          if(profit <= -0.5){
+            console.log(`손절기준 -0.5퍼센트보다 더 손실이므로 청산 ${profit}`);
             sellSignals[i] = closePrices[i];
 
             const gain = ((exitPrice - entryPrice) / entryPrice) * 100;
@@ -693,7 +693,7 @@ function calculateMACDAndTrades(
         }
       }else{
         sellSignals[i] = closePrices[i];
-        
+
         const gain = ((exitPrice - entryPrice) / entryPrice) * 100;
         trades.push({
           entryTime: timestamps[entryIndex],
