@@ -610,10 +610,12 @@ function calculateMACDAndTrades(
       inPosition = true;
       entryPrice = closePrices[i];
       entryIndex = i;
+
+      continue;
     }
 
     // 🔴 매도 조건: 데드크로스 + RSI 과매수 + Stochastic > 80
-    if (
+    else if (
       inPosition &&
       prevDiff > 0 &&
       currDiff < 0 &&
@@ -641,6 +643,8 @@ function calculateMACDAndTrades(
         });
         inPosition = false;
       }
+
+      continue;
 
     }else if(inPosition &&
       skip
@@ -688,6 +692,8 @@ function calculateMACDAndTrades(
         skip = false;
         skipCnt = 0;
     }
+
+    continue;
   }
 }
 
